@@ -1,8 +1,3 @@
----
-title: "Education and Household Income Across the United States"
-author: "Lily Walker"
----
-
 # Education and Household Income Across the United States
 
 ## Introduction
