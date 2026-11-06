@@ -1,100 +1,184 @@
-# Educational Attainment and Household Income Across U.S. States
+---
+title: "Education and Household Income Across the United States"
+author: "Lily Walker"
+---
 
-## Project Overview
+# Education and Household Income Across the United States
 
-This project uses data from the U.S. Census Bureau to explore the relationship between educational attainment and median household income across U.S. states.
+## Introduction
 
-Education is often associated with economic outcomes, but I wanted to explore how these patterns differ across states. Specifically, this project examines whether states with higher levels of educational attainment also tend to have higher median household incomes.
+Education is often viewed as an important factor in economic opportunity. People with higher levels of education tend to have access to different career opportunities, but the relationship between education and income can vary across geographic areas. Differences in industries, cost of living, and local economies may also influence household income.
 
-**Research Question:** Do states with higher levels of educational attainment tend to have higher median household incomes?
+I wanted to explore whether states with higher levels of educational attainment also tend to have higher median household incomes. Rather than looking at individual education and income records, I used publicly available Census data to compare educational attainment and income across U.S. states.
 
-## Data Source
+My goal was to create a dataset that could help identify broad patterns between education and economic outcomes and provide a starting point for further analysis.
 
-The data comes from the [U.S. Census Bureau's American Community Survey (ACS)](https://www.census.gov/programs-surveys/acs), using the ACS 5-year estimates.
+## Research Question
 
-I accessed the data through the Census API using Python's `census` package. The dataset includes estimates for all 50 U.S. states and the District of Columbia.
+**How does median household income vary across education levels among U.S. states?**
 
-The API provides information on population, household income, and educational attainment. I combined these variables into one dataset and grouped the educational attainment categories into broader groups to make comparisons easier.
+More specifically, I wanted to investigate which educational attainment categories have the strongest relationships with median household income. I grouped educational attainment into five categories:
 
-## Repository Contents
+- Less than a high school education
+- High school diploma through associate's degree
+- Bachelor's degree only
+- Master's degree only
+- Professional degree or doctorate
 
-```text
-├── data/
-│   └── census_educational_data.csv
-├── census_data.py
-└── README.md
-```
+## Data Source and Ethics
 
-- **data/**: Contains the final cleaned dataset.
-- **census_data.py**: Python script used to retrieve, clean, and transform the Census data.
-- **README.md**: Project description and instructions.
+I collected my data from the [U.S. Census Bureau's American Community Survey (ACS)](https://www.census.gov/programs-surveys/acs). The ACS provides demographic and economic estimates for communities throughout the United States.
 
-## Variables
+I used the Census API to retrieve ACS five-year estimates. The main Census tables used were:
 
-The final dataset contains the following variables:
+- **B01003:** Total population
+- **B15003:** Educational attainment for the population age 25 and older
+- **B19013:** Median household income
 
-| Variable | Description |
-|---|---|
-| `state` | State name |
-| `total_pop` | Total state population |
-| `adults_25_plus` | Population age 25 and older |
-| `median_income` | Median household income |
-| `less_than_hs_pct` | Percentage of adults who did not complete high school |
-| `hs_to_associates_pct` | Percentage who completed high school through an associate's degree, but not a bachelor's degree |
-| `bachelors_only_pct` | Percentage whose highest degree is a bachelor's degree |
-| `masters_only_pct` | Percentage whose highest degree is a master's degree |
-| `professional_or_doctorate_pct` | Percentage whose highest degree is a professional or doctorate degree |
+The data comes from publicly available, aggregated Census estimates rather than private individual records. Because I used an official government API instead of scraping individual websites, there were no concerns about accessing private information or collecting data without permission. I also avoided collecting personally identifiable information.
 
-All educational attainment percentages use the population age 25 and older as the denominator.
+For anyone interested in a similar project, the [Census API documentation](https://www.census.gov/data/developers/data-sets.html) explains how to access available datasets and variables.
 
 ## Data Collection and Cleaning
 
-The dataset was collected using the Census API and the ACS 5-year estimates. The Python script follows these steps:
+I used Python to retrieve and organize the data. The main packages were `census` and `pandas`. The Census Python package makes it possible to request specific variables from the API without manually constructing each request.
 
-1. **Retrieve data:** Request population, median household income, and all 24 educational attainment categories (for adults age 25+) for every state.
-2. **Organize data:** Convert the API results into a Pandas DataFrame and rename the columns for readability.
-3. **Clean data:** Convert numeric variables to numeric types and replace negative Census estimates, which indicate unavailable or missing data, with missing values.
-4. **Group educational attainment:** Combine the original 24 education categories into five broader groups based on the highest level of education completed.
-5. **Calculate percentages:** Divide each group's population count by the total population age 25+ and multiply by 100.
-6. **Export data:** Save the cleaned dataset as a CSV file.
+The general process was:
 
-## How to Reproduce the Dataset
+1. Obtain a free API key from the [Census Bureau](https://api.census.gov/data/key_signup.html).
+2. Use the `Census` package to request population, income, and educational attainment variables.
+3. Convert the API response into a pandas DataFrame.
+4. Rename the Census variable codes to more readable column names.
+5. Convert numeric variables to numeric data types and treat negative Census estimates as missing values.
+6. Combine the individual educational attainment counts into five broader categories.
+7. Calculate the percentage of adults age 25 and older in each education category.
+8. Export the cleaned dataset as a CSV file.
 
-Install the necessary Python packages:
+For example, the percentage of adults with only a bachelor's degree was calculated by dividing the number of adults whose highest reported educational attainment was a bachelor's degree by the total population age 25 and older, then multiplying by 100.
 
-```bash
-pip install census pandas
+The final dataset contains population, median household income, and five educational attainment percentages for each geographic area.
+
+The full collection and cleaning process is available in my [GitHub code repository](https://github.com/Lilian2345/386-Data-Acquisition-Blog/).
+
+## Exploratory Data Analysis
+
+I used `pandas`, `matplotlib`, and `seaborn` to explore the dataset. My analysis focused on comparing population and income across states and examining the relationships between educational attainment and median household income.
+
+### Population and Income Across States
+
+First, I compared population and median household income across the geographic areas in the dataset. I converted population into millions and income into thousands of dollars to make the charts easier to read.
+
+```{python}
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df = pd.read_csv("data/census_educational_data.csv")
+
+df["population_millions"] = df["total_pop"] / 1000000
+df["income_thousands"] = df["median_income"] / 1000
+
+largest_pop = df.sort_values("population_millions", ascending=False)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 8))
+
+sns.barplot(
+    data=largest_pop,
+    x="population_millions",
+    y="state",
+    hue="population_millions",
+    palette="Blues_r",
+    legend=False,
+    ax=axes[0]
+)
+
+axes[0].set_title("Population by State")
+axes[0].set_xlabel("Population (Millions)")
+axes[0].set_ylabel("")
+
+sns.barplot(
+    data=largest_pop.sort_values("income_thousands", ascending=False),
+    x="income_thousands",
+    y="state",
+    hue="income_thousands",
+    palette="Greens_r",
+    legend=False,
+    ax=axes[1]
+)
+
+axes[1].set_title("Median Household Income by State")
+axes[1].set_xlabel("Median Income (Thousands of Dollars)")
+axes[1].set_ylabel("")
+
+plt.tight_layout()
+plt.show()
 ```
 
-You will also need a free [Census API key](https://api.census.gov/data/key_signup.html).
+The dataset contains 52 geographic observations: the 50 states, Washington, D.C., and Puerto Rico. The average median household income across these areas was approximately **$79,371**, with a median of approximately $77,419. Washington, D.C. had the highest median household income at $109,870, while Puerto Rico had the lowest at $26,297. Among the 50 states, Massachusetts had the highest median household income at $103,960, and Mississippi had the lowest at $56,447.
 
-Open census_data.py and replace "YOUR_API_KEY" with your Census API key.
+### Educational Attainment and Income
 
-Then run the Python script:
+Next, I examined how each educational attainment category was associated with median household income. I created scatterplots with linear regression lines to visualize the relationships. I also calculated correlation coefficients to measure the strength and direction of each linear association.
 
-```bash
-python census_data.py
+```{python}
+education_vars = {
+    "less_than_hs_pct": "Less Than High School",
+    "hs_to_associates_pct": "High School Through Associate's",
+    "bachelors_only_pct": "Bachelor's Degree Only",
+    "masters_only_pct": "Master's Degree Only",
+    "professional_or_doctorate_pct": "Professional Degree or Doctorate"
+}
+
+fig, axes = plt.subplots(3, 2, figsize=(8, 10))
+axes = axes.flatten()
+
+for i, (variable, label) in enumerate(education_vars.items()):
+    correlation = df[variable].corr(df["income_thousands"])
+
+    sns.regplot(
+        data=df,
+        x=variable,
+        y="income_thousands",
+        ax=axes[i],
+        color="purple",
+        scatter_kws={"alpha": 0.7}
+    )
+
+    axes[i].set_title(
+        f"{label} vs. Income\nCorrelation: {correlation:.3f}"
+    )
+    axes[i].set_xlabel("Percentage of Adults Age 25+")
+    axes[i].set_ylabel("Median Household Income (Thousands)")
+
+    axes[i].xaxis.set_major_formatter(
+        plt.FuncFormatter(lambda x, _: f"{x:.0f}%")
+    )
+
+fig.delaxes(axes[5])
+plt.tight_layout()
+plt.show()
 ```
 
-The script will retrieve the Census data, clean and group the variables, and export the final dataset to `data/census_educational_data.csv`.
+The strongest positive correlation was between the percentage of adults with a master's degree only and median household income (**0.721**). The percentage with a bachelor's degree only also had a strong positive correlation (**0.712**). The professional degree or doctorate category had a positive correlation of **0.580**.
 
-## Further Information
+On the other hand, the percentage of adults with less than a high school education had a negative correlation of **-0.479**. The high school through associate's degree category also had a negative correlation of **-0.616**.
+
+Overall, the results suggest that states with higher percentages of adults with bachelor's and master's degrees also tend to have higher median household incomes. However, these relationships are based on comparisons between states, not individual people. Also, since the education categories add up to the entire adult population, a higher percentage in one category means a lower combined percentage in the others. Therefore, these relationships should simply be interpreted as comparisons rather than evidence of a causal relationship.
+
+## Limitations and Further Questions
+
+This analysis has some limitations. Since it compares data across geographic areas rather than individuals, it cannot tell us whether people with more education necessarily earn more. Household income is also influenced by factors such as household size, local industries, and cost of living, which are not included in this dataset. Additionally, correlation does not necessarily mean causation.
+
+A good next step would be to expand the dataset to smaller geographic areas, such as counties, and include additional variables like unemployment, poverty, and cost of living (such as the CPI). This would provide more observations and help explain why income and educational attainment vary across different areas.
+
+## Resources
 
 - [U.S. Census Bureau](https://www.census.gov/)
 - [American Community Survey](https://www.census.gov/programs-surveys/acs)
-- [Census API Documentation](https://www.census.gov/data/developers/data-sets/acs-5year.html)
-- [Census Python Package Documentation](https://github.com/datamade/census)
+- [Census API Documentation](https://www.census.gov/data/developers/data-sets.html)
+- [Census API Key Signup](https://api.census.gov/data/key_signup.html)
+- [Census Python Package](https://github.com/datamade/census)
+- [Pandas Documentation](https://pandas.pydata.org/docs/)
+- [Seaborn Documentation](https://seaborn.pydata.org/)
 
-## Future Analysis
-
-The final dataset can be used to explore differences in educational attainment and household income across states. Potential analyses include:
-
-- Comparing median household income across states with different educational attainment levels.
-- Examining the relationship between bachelor's degree attainment and median household income.
-- Identifying states with unusually high or low income relative to their educational attainment.
-- Creating visualizations to explore geographic and regional patterns.
-
-This dataset provides a starting point for exploring how educational attainment and economic outcomes vary across the United States.
-
-
-Note: This data originates from the US Census Bureau and is free to use.
+**Code Repository:** [View my project on GitHub](https://github.com/Lilian2345/386-Data-Acquisition-Blog/tree/main)
